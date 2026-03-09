@@ -1,228 +1,165 @@
-#include <stdio.h>
-#include "os_mem.h"   
+#include "os_mem.h"
 
+#include <algorithm>
+#include <vector>
 
-int global_size = 0;
+namespace {
 
-int global_Note_size = 0; 
-
-typedef struct Node {
+struct Block {
     int addr;
     int size;
-}Node;
+};
 
-Node* array = NULL;
+int g_total_size = 0;
+std::vector<Block> g_blocks;
 
-//***********************************
+bool is_created() { return g_total_size > 0; }
 
-int my_create(int size, int num_pages);
+int get_gap_size(int begin, int end)
+{
+    return end >= begin ? end - begin : 0;
+}
 
-void realloc_array(int counter);
-
-int my_destroy();
-
-void realloc_array(int counter);
-
-int my_destroy();
-
-int my_get_max_block_size();
-
-mem_handle_t my_alloc(int block_size);
-
-int my_get_free_space();
-
-void my_print_blocks();
-
-int my_free(mem_handle_t h);
-
-mem_handle_t my_get_block(int addr, int size);
-
-void setup_memory_manager(memory_manager_t* mm);
-
-//***********************************
+}  // namespace
 
 int my_create(int size, int num_pages)
 {
-    if (size > 0 && global_size == 0)
-    {
-        global_size = size;
-        return 1;
-    }
-    return 0; 
-}
+    (void)num_pages;
 
-void realloc_array(int counter)
-{
-    if (array == NULL)
-    {
-        array = (Node*)malloc(global_Note_size * sizeof(Node));
-        return;
+    if (size <= 0 || is_created()) {
+        return 0;
     }
 
-    Node* tmp_array = (Node*)malloc(global_Note_size * sizeof(Node));
-
-    for (int i = 0; i < counter; i++)
-    {
-        tmp_array[i].addr = array[i].addr;
-        tmp_array[i].size = array[i].size;
-    }
-
-    free(array);
-
-    array = tmp_array;
+    g_total_size = size;
+    g_blocks.clear();
+    return 1;
 }
 
 int my_destroy()
 {
-    if (global_size == 0) return 0;
-    free(array);
-    array = NULL;
-    global_Note_size = 0;
-    global_size = 0;
+    if (!is_created()) {
+        return 0;
+    }
+
+    g_total_size = 0;
+    g_blocks.clear();
     return 1;
 }
 
 int my_get_max_block_size()
 {
-    int counter = 0, tmp = 0;
-    if (global_Note_size > 0) {
-
-        tmp = global_size - (array[global_Note_size - 1].addr + array[global_Note_size - 1].size);
-
-        for (int i = 0; i < global_Note_size - 1; i++)
-        {
-            counter = array[i + 1].addr - (array[i].addr + array[i].size);
-
-            if (counter >= tmp)
-            {
-                tmp = counter;
-            }
-        }
-        return tmp;
+    if (!is_created()) {
+        return 0;
     }
 
-    return global_size;
+    int max_gap = 0;
+    int current_addr = 0;
+
+    for (const Block& block : g_blocks) {
+        max_gap = std::max(max_gap, get_gap_size(current_addr, block.addr));
+        current_addr = block.addr + block.size;
+    }
+
+    max_gap = std::max(max_gap, get_gap_size(current_addr, g_total_size));
+    return max_gap;
 }
 
 mem_handle_t my_alloc(int block_size)
 {
-    if (global_Note_size == 0)
-    {
-        global_Note_size++;
-        realloc_array(global_Note_size);
-        array[0].addr = 0;
-        array[0].size = block_size;
-        return { array[0].addr ,array[0].size };
+    if (!is_created() || block_size <= 0) {
+        return {0, 0};
     }
-    else
-    {
-        int counter = 0, tmp = 0, size_for_block, i = 0, result_addr, result_size;
-        size_for_block = my_get_max_block_size();
-        if (size_for_block >= block_size)
-        {
-            tmp = size_for_block;
-            global_Note_size += 1;
-            realloc_array(global_Note_size - 1);
 
-            for (i = 0; i < global_Note_size - 2; i++)
-            {
-                counter = array[i + 1].addr - (array[i].addr + array[i].size); 
+    int best_gap_addr = -1;
+    int best_gap_size = -1;
+    int current_addr = 0;
+    size_t insert_pos = 0;
 
-                if (counter >= tmp)
-                {
-                    tmp = counter;
-                    if (tmp == size_for_block)
-                    {
-                        int k = i + 1, x = 1, y = 2;
-                        for (k; k < global_Note_size - 1; k++)
-                        {
-                            array[global_Note_size - x].addr = array[global_Note_size - y].addr;
-                            array[global_Note_size - x].size = array[global_Note_size - y].size;
-                            x++;
-                            y++;
-                        }
-                        array[i + 1].addr = array[i].addr + array[i].size;
-                        array[i + 1].size = block_size;
-                        return { array[i + 1].addr,array[i + 1].size };
-                    }
-                }
-            }
-            array[global_Note_size - 1].addr = array[global_Note_size - 2].addr + array[global_Note_size - 2].size;
-            array[global_Note_size - 1].size = block_size;
-            return { array[global_Note_size - 1].addr,array[global_Note_size - 1].size };
+    for (size_t i = 0; i < g_blocks.size(); ++i) {
+        const int gap_size = get_gap_size(current_addr, g_blocks[i].addr);
+        if (gap_size > best_gap_size) {
+            best_gap_size = gap_size;
+            best_gap_addr = current_addr;
+            insert_pos = i;
         }
+        current_addr = g_blocks[i].addr + g_blocks[i].size;
     }
-    return{ 0,0 }; 
+
+    const int tail_gap = get_gap_size(current_addr, g_total_size);
+    if (tail_gap > best_gap_size) {
+        best_gap_size = tail_gap;
+        best_gap_addr = current_addr;
+        insert_pos = g_blocks.size();
+    }
+
+    if (best_gap_size < block_size) {
+        return {0, 0};
+    }
+
+    const Block new_block{best_gap_addr, block_size};
+    g_blocks.insert(g_blocks.begin() + static_cast<long>(insert_pos), new_block);
+    return {new_block.addr, new_block.size};
 }
 
 int my_get_free_space()
 {
-    if (global_Note_size == 0) return global_size;
-    int counter = 0, tmp = 0;
-    tmp = global_size - (array[global_Note_size - 1].addr + array[global_Note_size - 1].size);
-    for (int i = 0; i < global_Note_size - 1; i++)
-    {
-        counter = array[i + 1].addr - (array[i].addr + array[i].size);
-        tmp += counter;
+    if (!is_created()) {
+        return 0;
     }
-    return tmp;
+
+    int used = 0;
+    for (const Block& block : g_blocks) {
+        used += block.size;
+    }
+    return g_total_size - used;
 }
 
 void my_print_blocks()
 {
-    for (int i = 0; i < global_Note_size; i++)
-    {
-        if (array[i].addr == 0 && array[i].size == 0) continue;
-        printf("%d %d\n", array[i].addr, array[i].size);
+    for (const Block& block : g_blocks) {
+        printf("%d %d\n", block.addr, block.size);
     }
 }
 
 int my_free(mem_handle_t h)
 {
-    if (h.addr == 0 && h.size == array[0].size)
-    {
-        array[0].size = 0;
-        return 1;
+    if (!is_created()) {
+        return 0;
     }
 
-    for (int i = 0; i < global_Note_size; i++)
-    {
-        if (array[i].addr == h.addr)
-        {
-            if (array[i].size == h.size)
-            {
-                for (i; i < global_Note_size - 1; i++)
-                {
-                    array[i].addr = array[i + 1].addr;
-                    array[i].size = array[i + 1].size;
-                }
-                global_Note_size--;
-                realloc_array(global_Note_size);
-                return 1;
-            }
+    for (auto it = g_blocks.begin(); it != g_blocks.end(); ++it) {
+        if (it->addr == h.addr && it->size == h.size) {
+            g_blocks.erase(it);
+            return 1;
         }
     }
+
     return 0;
 }
 
 mem_handle_t my_get_block(int addr, int size)
 {
-    for (int i = 0; i < global_Note_size; i++)
-    {
-        if (array[i].addr <= addr && (array[i].addr + array[i].size) >= addr + size)
-        {
-            return { array[i].addr, array[i].size };
+    if (!is_created() || addr < 0 || size < 0) {
+        return {0, 0};
+    }
+
+    for (const Block& block : g_blocks) {
+        if (block.addr <= addr && addr + size <= block.addr + block.size) {
+            return {block.addr, block.size};
         }
     }
-    return { 0,0 };
+
+    return {0, 0};
 }
 
-void setup_memory_manager(memory_manager_t* mm) {
-    mm->create = my_create; 
-    mm->destroy = my_destroy; 
-    mm->alloc = my_alloc; 
-    mm->get_max_block_size = my_get_max_block_size; 
-    mm->get_free_space = my_get_free_space; 
-    mm->print_blocks = my_print_blocks; 
-    mm->free = my_free; 
+void setup_memory_manager(memory_manager_t* mm)
+{
+    mm->create = my_create;
+    mm->destroy = my_destroy;
+    mm->alloc = my_alloc;
+    mm->free = my_free;
+    mm->get_block = my_get_block;
+    mm->get_max_block_size = my_get_max_block_size;
+    mm->get_free_space = my_get_free_space;
+    mm->print_blocks = my_print_blocks;
 }
