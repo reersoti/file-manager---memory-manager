@@ -1,34 +1,32 @@
-# Memory Management in C++
+# File Manager & Memory Manager in C++
 
-An educational C++ project focused on manual memory handling, allocation logic, and low-level resource management.
+An educational C++ project focused on low-level file handling and manual memory management.
 
 ## Overview
 
-This repository explores memory-related programming concepts in C++ beyond standard high-level container usage.  
-It focuses on manual allocation, deallocation, ownership, and the internal logic behind memory-aware abstractions.
+This repository explores systems-level programming concepts in C++, including manual memory handling, file abstraction logic, resource ownership, and test-driven validation of low-level components.
 
-The project was created to better understand how dynamic memory works in practice and how low-level design decisions affect flexibility, safety, and performance.
-
-Rather than being a production-ready allocator library, this repository is an educational exercise in systems-level reasoning and explicit resource control.
+The project is not intended to be a production-ready library. It was created as an educational exercise to better understand how explicit resource control works in practice and how low-level design decisions affect safety, flexibility, and maintainability.
 
 ## Goals
 
 The project is intended to deepen understanding of:
 
-- dynamic memory allocation
-- deallocation and ownership
-- lifetime management
-- low-level resource handling
-- trade-offs between safety and manual control
+- dynamic memory allocation and deallocation
+- ownership and lifetime management
+- file handling abstractions
+- low-level resource management
+- CMake-based C++ project organization
+- basic automated testing with CTest
 
 ## Project Structure
 
 ```text
 .
-├── include/
-├── src/
-├── tests/
-├── CMakeLists.txt
+├── File_Manager/       # file-related implementation
+├── Memory_Manager/     # memory-related implementation
+├── tests/              # test executables
+├── CMakeLists.txt      # CMake build configuration
 └── README.md
 ```
 
@@ -39,43 +37,42 @@ cmake -S . -B build
 cmake --build build
 ```
 
-## Run
+## Run Tests
 
 ```bash
-./build/memory_manager_demo
+ctest --test-dir build --output-on-failure
 ```
 
-## Educational Value
+You can also run the generated test executables directly:
 
-This project can be useful for:
-
-- learning how memory is managed in C++
-- understanding ownership and lifetime issues
-- practicing low-level design
-- exploring resource control beyond standard containers
+```bash
+./build/test_memory_manager
+./build/test_file_manager
+```
 
 ## What This Project Demonstrates
 
-- knowledge of core C++ memory concepts
-- manual control over resource management
-- low-level programming mindset
-- understanding of ownership and allocation patterns
-- educational approach to systems programming
+- manual control over memory-related operations
+- separation of file-management and memory-management logic
+- understanding of ownership and resource lifetime
+- basic C++ testing workflow with CTest
+- practical use of CMake for building multiple targets
 
 ## Possible Improvements
 
-- add stronger safety checks
-- improve internal ownership model
-- add benchmarks
-- expand tests
-- document design choices in more detail
-- compare with STL allocators or smart-pointer-based approaches
+- add more edge-case tests
+- document the internal API of each manager
+- add examples of expected input/output behavior
+- improve error handling and validation
+- compare manual resource handling with RAII-based alternatives
+- add CI workflow for automatic build and test checks
 
 ## Tech Stack
 
-- C++
+- C++17
 - CMake
+- CTest
 
 ## Notes
 
-This repository is intended as an educational project focused on memory management concepts and low-level resource handling in C++.
+This repository is intended as an educational project focused on file operations, memory management concepts, and explicit resource control in C++.
