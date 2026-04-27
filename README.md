@@ -28,6 +28,7 @@ The project is intended to deepen understanding of:
 ├── File_Manager/       # file-related implementation
 ├── Memory_Manager/     # memory-related implementation
 ├── tests/              # test executables
+├── docs/               # design notes and documentation
 ├── CMakeLists.txt      # CMake build configuration
 └── README.md
 ```
@@ -51,6 +52,10 @@ You can also run the generated test executables directly:
 ./build/test_memory_manager
 ./build/test_file_manager
 ```
+
+## Documentation
+
+- [Design Notes](docs/DESIGN_NOTES.md)
 
 ## Continuous Integration
 
