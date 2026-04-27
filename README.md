@@ -1,5 +1,7 @@
 # File Manager & Memory Manager in C++
 
+![CMake CI](https://github.com/reersoti/file-manager---memory-manager/actions/workflows/cmake.yml/badge.svg)
+
 An educational C++ project focused on low-level file handling and manual memory management.
 
 ## Overview
@@ -50,6 +52,10 @@ You can also run the generated test executables directly:
 ./build/test_file_manager
 ```
 
+## Continuous Integration
+
+The repository includes a GitHub Actions workflow that automatically builds the project and runs CTest checks on every push and pull request to `main`.
+
 ## What This Project Demonstrates
 
 - manual control over memory-related operations
@@ -65,13 +71,13 @@ You can also run the generated test executables directly:
 - add examples of expected input/output behavior
 - improve error handling and validation
 - compare manual resource handling with RAII-based alternatives
-- add CI workflow for automatic build and test checks
 
 ## Tech Stack
 
 - C++17
 - CMake
 - CTest
+- GitHub Actions
 
 ## Notes
 
