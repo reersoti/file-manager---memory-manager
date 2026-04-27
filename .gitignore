@@ -1,2 +1,40 @@
+# Build directories
 build/
+cmake-build-*/
+out/
+
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+Testing/
+
+# Compiled object files
 *.o
+*.obj
+*.lo
+*.slo
+
+# Libraries
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Debug / IDE files
+*.pdb
+*.ilk
+*.dSYM/
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
